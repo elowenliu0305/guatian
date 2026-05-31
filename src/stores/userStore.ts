@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
-import { createAnonymousProfile } from '../services/api'
 
 function generateId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -18,9 +17,6 @@ interface UserState {
   isLoggedIn: boolean;
   nickname: string;
   avatar: string;
-  level: number;
-  title: string;
-  guaziBalance: number;
   loading: boolean;
   loginAnonymous: () => Promise<void>;
   loginEmail: (email: string, password: string) => Promise<string | null>;
@@ -34,13 +30,10 @@ export const useUserStore = create<UserState>((set) => ({
   isLoggedIn: false,
   nickname: '',
   avatar: '',
-  level: 1,
-  title: '新猹上路',
-  guaziBalance: 100,
   loading: false,
 
   initFromStorage: () => {
-    const stored = localStorage.getItem('guatian_user')
+    const stored = localStorage.getItem('luanbb_user')
     if (stored) {
       try {
         const user = JSON.parse(stored)
@@ -49,12 +42,9 @@ export const useUserStore = create<UserState>((set) => ({
           isLoggedIn: true,
           nickname: user.nickname,
           avatar: user.avatar,
-          level: user.level || 1,
-          title: user.title || '新猹上路',
-          guaziBalance: user.guazi_balance || 100,
         })
       } catch {
-        localStorage.removeItem('guatian_user')
+        localStorage.removeItem('luanbb_user')
       }
     }
   },
@@ -62,26 +52,21 @@ export const useUserStore = create<UserState>((set) => ({
   loginAnonymous: async () => {
     set({ loading: true })
     try {
-      const names = ['momo', '猹猹', '吃瓜群众', '理性猹友', '瓜田守望者', '吃瓜猹', '瓜田李下']
+      const names = ['momo', '小透明', '吃瓜群众', '路过一下', '深夜bb机', '沉默是金', '你说得对']
       const randomName = names[Math.floor(Math.random() * names.length)]
       const avatar = `https://api.dicebear.com/7.x/thumbs/svg?seed=${randomName}`
       const id = generateId()
-
-      try { await createAnonymousProfile(randomName) } catch {}
 
       const userData = {
         id,
         nickname: randomName,
         avatar,
-        level: Math.floor(Math.random() * 8) + 1,
-        title: ['吃瓜达人', '理性吃瓜人', '证据大师', '上古瓜王', '热心猹友'][Math.floor(Math.random() * 5)],
-        guazi_balance: 100,
       }
 
-      localStorage.setItem('guatian_user', JSON.stringify(userData))
+      localStorage.setItem('luanbb_user', JSON.stringify(userData))
       set({
         userId: id, isLoggedIn: true, nickname: randomName, avatar,
-        level: userData.level, title: userData.title, guaziBalance: 100, loading: false,
+        loading: false,
       })
     } catch (err) {
       console.error('Login failed:', err)
@@ -102,15 +87,11 @@ export const useUserStore = create<UserState>((set) => ({
           id: data.user.id,
           nickname: email.split('@')[0],
           avatar: `https://api.dicebear.com/7.x/thumbs/svg?seed=${email}`,
-          level: 1,
-          title: '新猹上路',
-          guazi_balance: 100,
         }
-        localStorage.setItem('guatian_user', JSON.stringify(userData))
+        localStorage.setItem('luanbb_user', JSON.stringify(userData))
         set({
           userId: data.user.id, isLoggedIn: true, nickname: userData.nickname,
-          avatar: userData.avatar, level: 1, title: '新猹上路',
-          guaziBalance: 100, loading: false,
+          avatar: userData.avatar, loading: false,
         })
       }
       return null
@@ -129,28 +110,15 @@ export const useUserStore = create<UserState>((set) => ({
         return error.message
       }
       if (data.user) {
-        // Create profile in database
-        try {
-          await supabase.from('profiles').insert({
-            id: data.user.id,
-            nickname: email.split('@')[0],
-            guazi_balance: 100,
-          })
-        } catch {}
-
         const userData = {
           id: data.user.id,
           nickname: email.split('@')[0],
           avatar: `https://api.dicebear.com/7.x/thumbs/svg?seed=${email}`,
-          level: 1,
-          title: '新猹上路',
-          guazi_balance: 100,
         }
-        localStorage.setItem('guatian_user', JSON.stringify(userData))
+        localStorage.setItem('luanbb_user', JSON.stringify(userData))
         set({
           userId: data.user.id, isLoggedIn: true, nickname: userData.nickname,
-          avatar: userData.avatar, level: 1, title: '新猹上路',
-          guaziBalance: 100, loading: false,
+          avatar: userData.avatar, loading: false,
         })
       }
       return null
@@ -162,10 +130,9 @@ export const useUserStore = create<UserState>((set) => ({
 
   logout: async () => {
     await supabase.auth.signOut()
-    localStorage.removeItem('guatian_user')
+    localStorage.removeItem('luanbb_user')
     set({
       userId: null, isLoggedIn: false, nickname: '', avatar: '',
-      level: 1, title: '新猹上路', guaziBalance: 100,
     })
   },
 }))

@@ -5,16 +5,15 @@ import { supabase } from '../lib/supabase'
 export async function createAnonymousProfile(nickname: string) {
   const { data, error } = await supabase.rpc('create_anonymous_profile', { nickname })
   if (error) {
-    // Fallback: direct insert if RPC fails
     const { data: directData, error: directError } = await supabase
       .from('profiles')
-      .insert({ nickname, guazi_balance: 100 })
+      .insert({ nickname })
       .select()
       .single()
     if (directError) throw directError
     return directData
   }
-  return { id: data, nickname, guazi_balance: 100 }
+  return { id: data, nickname }
 }
 
 export async function getProfile(id: string) {
@@ -38,27 +37,25 @@ export async function updateProfile(id: string, updates: Record<string, any>) {
   return data
 }
 
-// ─── Melons ───
+// ─── Topics ───
 
-export async function createMelon(melon: {
+export async function createTopic(topic: {
   title: string
   description?: string
   creator_id: string
-  retention_seconds: number
-  is_time_limited?: boolean
-  allow_revival?: boolean
-  allow_images?: boolean
+  x?: number
+  y?: number
+  color?: string
 }) {
   const { data, error } = await supabase
-    .from('melons')
+    .from('topics')
     .insert({
-      title: melon.title,
-      description: melon.description || '',
-      creator_id: melon.creator_id,
-      retention_seconds: melon.retention_seconds,
-      is_time_limited: melon.is_time_limited ?? true,
-      allow_revival: melon.allow_revival ?? true,
-      allow_images: melon.allow_images ?? true,
+      title: topic.title,
+      description: topic.description || '',
+      creator_id: topic.creator_id,
+      x: topic.x ?? 10,
+      y: topic.y ?? 10,
+      color: topic.color || '#E8F5E9',
     })
     .select()
     .single()
@@ -66,29 +63,27 @@ export async function createMelon(melon: {
   return data
 }
 
-export async function getMelons(params?: {
-  status?: string
+export async function getTopics(params?: {
   creatorId?: string
   searchQuery?: string
   hotOnly?: boolean
 }) {
-  let query = supabase.from('melons').select('*')
+  let query = supabase.from('topics').select('*')
 
-  if (params?.status) query = query.eq('status', params.status)
   if (params?.creatorId) query = query.eq('creator_id', params.creatorId)
   if (params?.searchQuery) query = query.ilike('title', `%${params.searchQuery}%`)
   if (params?.hotOnly) query = query.gt('heat_score', 50000)
 
-  query = query.order('last_activity_at', { ascending: false })
+  query = query.order('created_at', { ascending: false })
 
   const { data, error } = await query
   if (error) throw error
   return data
 }
 
-export async function getMelon(id: string) {
+export async function getTopic(id: string) {
   const { data, error } = await supabase
-    .from('melons')
+    .from('topics')
     .select('*')
     .eq('id', id)
     .single()
@@ -96,111 +91,50 @@ export async function getMelon(id: string) {
   return data
 }
 
-export async function updateMelonStatus(id: string, status: string) {
-  const { data, error } = await supabase
-    .from('melons')
-    .update({ status })
-    .eq('id', id)
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
+// ─── Notes ───
 
-// ─── Sheets ───
-
-export async function getSheets(melonId: string) {
+export async function getNotes(topicId: string) {
   const { data, error } = await supabase
-    .from('sheets')
+    .from('notes')
     .select('*')
-    .eq('melon_id', melonId)
-    .order('sort_order')
+    .eq('topic_id', topicId)
+    .order('created_at', { ascending: true })
   if (error) throw error
   return data
 }
 
-// ─── Cells ───
-
-export async function getCells(sheetId: string) {
-  const { data, error } = await supabase
-    .from('cells')
-    .select('*')
-    .eq('sheet_id', sheetId)
-  if (error) throw error
-  return data
-}
-
-export async function upsertCell(cell: {
-  sheet_id: string
-  row_num: number
-  col_num: number
+export async function createNote(note: {
+  topic_id: string
   content: string
-  background_color?: string
+  author: string
+  x?: number
+  y?: number
+  color?: string
   is_poster?: boolean
   poster_text?: string
-  span_rows?: number
-  span_cols?: number
-  has_image?: boolean
-  image_url?: string
 }) {
   const { data, error } = await supabase
-    .from('cells')
-    .upsert(cell, { onConflict: 'sheet_id, row_num, col_num' })
+    .from('notes')
+    .insert({
+      topic_id: note.topic_id,
+      content: note.content,
+      author: note.author,
+      x: note.x ?? 0,
+      y: note.y ?? 0,
+      color: note.color || '#FFF',
+      is_poster: note.is_poster ?? false,
+      poster_text: note.poster_text || null,
+    })
     .select()
     .single()
   if (error) throw error
   return data
 }
 
-// ─── Cell Reactions ───
-
-export async function addReaction(cellId: string, userId: string, reactionType: string) {
-  const { data, error } = await supabase
-    .from('cell_reactions')
-    .upsert(
-      { cell_id: cellId, user_id: userId, reaction_type: reactionType },
-      { onConflict: 'cell_id, user_id, reaction_type' }
-    )
-    .select()
-    .single()
+export async function likeNote(noteId: string) {
+  const { data, error } = await supabase.rpc('like_note', { note_id: noteId })
   if (error) throw error
   return data
-}
-
-// ─── Tips ───
-
-export async function createTip(cellId: string, userId: string, amount: number) {
-  const { data, error } = await supabase
-    .from('cell_tips')
-    .insert({ cell_id: cellId, user_id: userId, amount })
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-// ─── Revival ───
-
-export async function createRevivalRequest(melonId: string, requesterId: string, duration: number) {
-  const { data, error } = await supabase
-    .from('revival_requests')
-    .insert({ melon_id: melonId, requester_id: requesterId, revival_duration: duration })
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-// ─── Online Participants ───
-
-export async function trackVisit(melonId: string, userId: string) {
-  const { error } = await supabase
-    .from('melon_participants')
-    .upsert(
-      { melon_id: melonId, user_id: userId, last_visited_at: new Date().toISOString() },
-      { onConflict: 'melon_id, user_id' }
-    )
-  if (error) throw error
 }
 
 // ─── Storage ───
@@ -209,12 +143,12 @@ export async function uploadImage(file: File, userId: string) {
   const ext = file.name.split('.').pop()
   const path = `${userId}/${Date.now()}.${ext}`
   const { data, error } = await supabase.storage
-    .from('melon-images')
+    .from('topic-images')
     .upload(path, file)
   if (error) throw error
 
   const { data: urlData } = supabase.storage
-    .from('melon-images')
+    .from('topic-images')
     .getPublicUrl(path)
   return urlData.publicUrl
 }

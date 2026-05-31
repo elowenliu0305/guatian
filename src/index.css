@@ -1,15 +1,11 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
 
 @theme {
-  --color-melon-green: #4CAF50;
-  --color-melon-dark: #2E7D32;
-  --color-melon-red: #F44336;
-  --color-melon-yellow: #FFC107;
-  --color-melon-purple: #9C27B0;
-  --color-melon-blue: #2196F3;
-  --color-melon-bg: #F5F5F5;
-  --color-grid-line: #E0E0E0;
+  --color-brand: #3B82F6;
+  --color-brand-dark: #0F172A;
+  --color-brand-light: #06B6D4;
+  --color-bg: #F8FAFC;
+  --color-bg-light: #F1F5F9;
 }
 
 html, body, #root {
@@ -41,21 +37,22 @@ html, body, #root {
   50% { opacity: 0.5; }
 }
 
-/* Prevent text selection on grid */
-.grid-no-select {
+/* Canvas touch handling */
+.canvas-no-select {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  touch-action: none;
 }
 
-/* Input still selectable */
-.grid-no-select input,
-.grid-no-select textarea {
+.canvas-no-select input,
+.canvas-no-select textarea {
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
   user-select: text;
+  touch-action: auto;
 }
 
 .animate-slide-up {

@@ -1,41 +1,36 @@
-export interface Melon {
+export interface Topic {
   id: string;
   title: string;
   description: string;
-  status: 'live' | 'dying' | 'dead' | 'revived';
-  isTimeLimited: boolean;
-  hasImage: boolean;
-  allowRevival: boolean;
+  x: number;
+  y: number;
+  color: string;
   creator: string;
-  onlineCount: number;
-  lastEdited: string;
-  retentionTime: number; // seconds remaining
+  noteCount: number;
   heatScore: number;
-  historicalHeat: number;
-  revivalCount: number;
-  deathTime?: string;
+  isHot?: boolean;
+  createdAt: string;
 }
 
-export interface Cell {
+export interface Note {
   id: string;
-  row: number;
-  col: number;
+  topicId: string;
+  x: number;
+  y: number;
   content: string;
-  color?: string;
-  isImage?: boolean;
-  imageUrl?: string;
+  color: string;
+  author: string;
+  createdAt: string;
+  updatedAt: string;
   likes: number;
-  dislikes: number;
-  reactions: Record<string, number>;
-  isMerged?: boolean;
-  mergeRange?: { startRow: number; startCol: number; endRow: number; endCol: number };
   isPoster?: boolean;
-}
-
-export interface Sheet {
-  id: string;
-  name: string;
-  cells: Cell[];
+  posterText?: string;
+  width?: number;
+  height?: number;
+  textColor?: string;
+  fontSize?: 'sm' | 'base' | 'lg';
+  manualSize?: 'compact' | 'normal' | 'large';
+  image?: string;
 }
 
 export interface User {
@@ -43,10 +38,5 @@ export interface User {
   nickname: string;
   avatar: string;
   isAnonymous: boolean;
-  level: number;
-  title: string;
-  melonCount: number;
-  hotMelonCount: number;
-  guaziBalance: number;
   likes: number;
 }
